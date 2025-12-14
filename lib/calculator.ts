@@ -1,4 +1,4 @@
-import { supabase } from './supabase'
+import { supabase, isSupabaseConfigured } from './supabase'
 
 export interface CalculationResult {
   employee_name: string
@@ -11,12 +11,16 @@ export interface CalculationResult {
  * 计算社保公积金费用
  */
 export async function calculateAndStoreResults(): Promise<void> {
+  if (!isSupabaseConfigured()) {
+    throw new Error('Supabase 未配置，请检查环境变量')
+  }
+
   try {
     // 1. 清空 results 表
     await clearResultsTable()
 
     // 2. 获取所有工资数据
-    const { data: salaries, error: salariesError } = await supabase
+    const { data: salaries, error: salariesError } = await supabase!
       .from('salaries')
       .select('*')
 
@@ -43,7 +47,7 @@ export async function calculateAndStoreResults(): Promise<void> {
     const firstEmployeeMonths = Object.values(employeeGroups)[0] as any[]
     const year = firstEmployeeMonths[0].month.substring(0, 4)
 
-    const { data: cityData, error: cityError } = await supabase
+    const { data: cityData, error: cityError } = await supabase!
       .from('cities')
       .select('*')
       .eq('city_name', '佛山')
@@ -86,7 +90,7 @@ export async function calculateAndStoreResults(): Promise<void> {
     }
 
     // 6. 批量插入 results 表
-    const { error: insertError } = await supabase
+    const { error: insertError } = await supabase!
       .from('results')
       .insert(results)
 
@@ -105,7 +109,7 @@ export async function calculateAndStoreResults(): Promise<void> {
  * 清空 results 表
  */
 async function clearResultsTable(): Promise<void> {
-  const { error } = await supabase
+  const { error } = await supabase!
     .from('results')
     .delete()
     .neq('id', 0)  // 删除所有记录
