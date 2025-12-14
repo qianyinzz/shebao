@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { supabase } from '../../lib/supabase'
+import { supabase, isSupabaseConfigured } from '../../lib/supabase'
 
 interface Result {
   id: number
@@ -22,8 +22,14 @@ export default function ResultsPage() {
   }, [])
 
   const fetchResults = async () => {
+    if (!isSupabaseConfigured()) {
+      setError('Supabase 未配置，请检查环境变量')
+      setLoading(false)
+      return
+    }
+
     try {
-      const { data, error } = await supabase
+      const { data, error } = await supabase!
         .from('results')
         .select('*')
         .order('employee_name')

@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { supabase } from '../../lib/supabase'
+import { supabase, isSupabaseConfigured } from '../../lib/supabase'
 import { parseCitiesExcel, parseSalariesExcel } from '../../lib/excel'
 import { calculateAndStoreResults } from '../../lib/calculator'
 
@@ -26,13 +26,18 @@ export default function UploadPage() {
       return
     }
 
+    if (!isSupabaseConfigured()) {
+      showMessage('Supabase 未配置，请检查环境变量', 'error')
+      return
+    }
+
     setIsLoading(true)
     showMessage('正在处理社保标准数据...', 'info')
 
     try {
       const citiesData = await parseCitiesExcel(file)
 
-      const { error: clearError } = await supabase
+      const { error: clearError } = await supabase!
         .from('cities')
         .delete()
         .neq('id', 0)
@@ -41,7 +46,7 @@ export default function UploadPage() {
         throw new Error('清空社保标准数据失败：' + clearError.message)
       }
 
-      const { error: insertError } = await supabase
+      const { error: insertError } = await supabase!
         .from('cities')
         .insert(citiesData)
 
@@ -67,13 +72,18 @@ export default function UploadPage() {
       return
     }
 
+    if (!isSupabaseConfigured()) {
+      showMessage('Supabase 未配置，请检查环境变量', 'error')
+      return
+    }
+
     setIsLoading(true)
     showMessage('正在处理工资数据...', 'info')
 
     try {
       const salariesData = await parseSalariesExcel(file)
 
-      const { error: clearError } = await supabase
+      const { error: clearError } = await supabase!
         .from('salaries')
         .delete()
         .neq('id', 0)
@@ -82,7 +92,7 @@ export default function UploadPage() {
         throw new Error('清空工资数据失败：' + clearError.message)
       }
 
-      const { error: insertError } = await supabase
+      const { error: insertError } = await supabase!
         .from('salaries')
         .insert(salariesData)
 
@@ -100,6 +110,11 @@ export default function UploadPage() {
   }
 
   const handleCalculate = async () => {
+    if (!isSupabaseConfigured()) {
+      showMessage('Supabase 未配置，请检查环境变量', 'error')
+      return
+    }
+
     setIsLoading(true)
     showMessage('正在执行计算...', 'info')
 
